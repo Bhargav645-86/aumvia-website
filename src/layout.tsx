@@ -1,6 +1,6 @@
 import { Inter } from 'next/font/google';
-import Providers from './providers'; // Import the client providers component
-import './globals.css'; // Your existing global styles (e.g., Tailwind)
+import { SessionProvider } from 'next-auth/react';
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -15,12 +15,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="theme-color" content="#4f46e5" />
         <link rel="icon" href="/favicon.ico" />
-        <link rel="manifest" href="/manifest.json" /> {/* For PWA */}
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
-        <Providers> {/* Use the client providers component */}
+        <SessionProvider>
           {children}
-        </Providers>
+        </SessionProvider>
       </body>
     </html>
   );

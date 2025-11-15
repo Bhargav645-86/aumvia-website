@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
+/* Aumvia Spiritual-Tech Design System */
 :root {
+  /* Brand Colors - Spiritual Harmony */
+  --color-indigo: #4A0E8B;
+  --color-indigo-dark: #3A0E6B;
+  --color-emerald: #0B6E4F;
+  --color-emerald-dark: #0A5C3F;
+  --color-gold: #D4AF37;
+  --color-gold-glow: #E6C756;
+  --color-lotus: #F8F1E8;
+  --color-gray-soft: #F5F5F5;
+  
+  /* Alert Colors */
+  --color-success: #4CAF50;
+  --color-warning: #FFBF00;
+  --color-error: #D32F2F;
+  
+  /* Background & Foreground */
   --background: #ffffff;
   --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Aumvia Custom Colors */
+  --color-indigo: #4A0E8B;
+  --color-indigo-dark: #3A0E6B;
+  --color-emerald: #0B6E4F;
+  --color-emerald-dark: #0A5C3F;
+  --color-gold: #D4AF37;
+  --color-gold-glow: #E6C756;
+  --color-lotus: #F8F1E8;
+  --color-gray-soft: #F5F5F5;
+  --color-success: #4CAF50;
+  --color-warning: #FFBF00;
+  --color-error: #D32F2F;
+  
+  /* Typography */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Montserrat', sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Headings - Playfair Display for Elegance */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 48px;
+}
+
+h2 {
+  font-size: 36px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+/* Spiritual Gradient Backgrounds */
+.gradient-hero {
+  background: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-emerald) 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-glow) 100%);
+}
+
+/* Lotus Background Pattern */
+.lotus-bg {
+  background-color: var(--color-lotus);
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(74, 14, 139, 0.05) 0%, transparent 50%);
+}
+
+/* Gold Glow Effect for CTAs */
+.gold-glow {
+  box-shadow: 0 0 10px var(--color-gold), 0 0 20px rgba(212, 175, 55, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.gold-glow:hover {
+  box-shadow: 0 0 15px var(--color-gold-glow), 0 0 30px rgba(230, 199, 86, 0.5);
+}
+
+/* Rounded Spiritual Shapes */
+.btn-rounded {
+  border-radius: 50px;
+  padding: 12px 32px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.card-rounded {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+/* Om Icon Rotation Animation */
+@keyframes om-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.om-spin {
+  animation: om-rotate 2s linear infinite;
+}
+
+/* Smooth Transitions */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+/* Accessibility - Focus States */
+*:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 36px;
+  }
+  
+  h2 {
+    font-size: 28px;
+  }
+  
+  h3 {
+    font-size: 20px;
+  }
+  
+  body {
+    font-size: 14px;
+  }
 }
