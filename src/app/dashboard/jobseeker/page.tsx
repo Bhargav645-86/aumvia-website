@@ -102,9 +102,9 @@ export default function JobSeekerDashboard() {
   const navigationItems = [
     { name: 'Dashboard', href: '/dashboard/jobseeker', icon: Briefcase, active: true },
     { name: 'Find Shifts', href: '/marketplace', icon: MapPin },
-    { name: 'My Shifts', href: '/jobseeker/shifts', icon: Calendar },
+    { name: 'My Shifts', href: '/jobseeker/my-shifts', icon: Calendar },
     { name: 'My Profile', href: '/jobseeker/profile', icon: User },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
+    { name: 'Notifications', href: '/jobseeker/notifications', icon: Bell },
   ];
 
   return (

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -7,10 +7,11 @@ import {
   Users, FileText, MessageSquare, Plus, Search, 
   Calendar, Mail, Phone, CheckCircle, Clock, X,
   ArrowLeft, Download, Upload, Edit2, Trash2, Send,
-  UserPlus, FileCheck, Bell, AlertCircle
+  UserPlus, FileCheck, Bell, AlertCircle, Loader2
 } from 'lucide-react';
 
 interface Employee {
+  _id?: string;
   id: string;
   name: string;
   email: string;
@@ -41,19 +42,117 @@ interface Document {
   status: 'valid' | 'expiring' | 'expired';
 }
 
+interface NewEmployeeForm {
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  department: string;
+  startDate: string;
+}
+
 export default function HRManagement() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<'employees' | 'documents' | 'communication'>('employees');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-  const [employees] = useState<Employee[]>([
-    { id: '1', name: 'Ben Carter', email: 'ben@example.com', phone: '07700 900123', role: 'Barista', department: 'Front of House', startDate: '2024-03-15', status: 'active' },
-    { id: '2', name: 'Chloe Williams', email: 'chloe@example.com', phone: '07700 900456', role: 'Manager', department: 'Management', startDate: '2023-08-01', status: 'active' },
-    { id: '3', name: 'David Lee', email: 'david@example.com', phone: '07700 900789', role: 'Server', department: 'Front of House', startDate: '2024-06-10', status: 'on-leave' },
-    { id: '4', name: 'Emma Clark', email: 'emma@example.com', phone: '07700 900012', role: 'Kitchen Staff', department: 'Kitchen', startDate: '2024-01-20', status: 'active' },
-  ]);
+  const [newEmployee, setNewEmployee] = useState<NewEmployeeForm>({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'Barista',
+    department: 'Front of House',
+    startDate: new Date().toISOString().split('T')[0]
+  });
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await fetch('/api/hr/employees');
+        if (response.ok) {
+          const data = await response.json();
+          const formattedEmployees = data.map((emp: Employee) => ({
+            ...emp,
+            id: emp._id || emp.id
+          }));
+          setEmployees(formattedEmployees.length > 0 ? formattedEmployees : [
+            { id: '1', name: 'Ben Carter', email: 'ben@example.com', phone: '07700 900123', role: 'Barista', department: 'Front of House', startDate: '2024-03-15', status: 'active' },
+            { id: '2', name: 'Chloe Williams', email: 'chloe@example.com', phone: '07700 900456', role: 'Manager', department: 'Management', startDate: '2023-08-01', status: 'active' },
+            { id: '3', name: 'David Lee', email: 'david@example.com', phone: '07700 900789', role: 'Server', department: 'Front of House', startDate: '2024-06-10', status: 'on-leave' },
+            { id: '4', name: 'Emma Clark', email: 'emma@example.com', phone: '07700 900012', role: 'Kitchen Staff', department: 'Kitchen', startDate: '2024-01-20', status: 'active' },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([
+          { id: '1', name: 'Ben Carter', email: 'ben@example.com', phone: '07700 900123', role: 'Barista', department: 'Front of House', startDate: '2024-03-15', status: 'active' },
+          { id: '2', name: 'Chloe Williams', email: 'chloe@example.com', phone: '07700 900456', role: 'Manager', department: 'Management', startDate: '2023-08-01', status: 'active' },
+          { id: '3', name: 'David Lee', email: 'david@example.com', phone: '07700 900789', role: 'Server', department: 'Front of House', startDate: '2024-06-10', status: 'on-leave' },
+          { id: '4', name: 'Emma Clark', email: 'emma@example.com', phone: '07700 900012', role: 'Kitchen Staff', department: 'Kitchen', startDate: '2024-01-20', status: 'active' },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  const handleAddEmployee = async () => {
+    if (!newEmployee.name || !newEmployee.email) {
+      setSubmitMessage({ type: 'error', text: 'Please fill in all required fields' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitMessage(null);
+
+    try {
+      const response = await fetch('/api/hr/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newEmployee,
+          status: 'active',
+          businessId: session?.user?.email || 'default'
+        })
+      });
+
+      if (response.ok) {
+        const savedEmployee = await response.json();
+        setEmployees([...employees, {
+          ...savedEmployee,
+          id: savedEmployee._id || String(Date.now())
+        }]);
+        setSubmitMessage({ type: 'success', text: 'Staff member added successfully!' });
+        setNewEmployee({
+          name: '',
+          email: '',
+          phone: '',
+          role: 'Barista',
+          department: 'Front of House',
+          startDate: new Date().toISOString().split('T')[0]
+        });
+        setTimeout(() => {
+          setShowAddEmployeeModal(false);
+          setSubmitMessage(null);
+        }, 1500);
+      } else {
+        throw new Error('Failed to add employee');
+      }
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      setSubmitMessage({ type: 'error', text: 'Failed to add staff member. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const [leaveRequests] = useState<LeaveRequest[]>([
     { id: '1', employeeName: 'David Lee', type: 'Annual Leave', startDate: '2024-12-10', endDate: '2024-12-15', status: 'approved', reason: 'Family holiday' },
@@ -508,45 +607,113 @@ export default function HRManagement() {
               </button>
             </div>
 
+            {submitMessage && (
+              <div className={`mb-4 p-3 rounded-xl flex items-center gap-2 ${
+                submitMessage.type === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {submitMessage.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                {submitMessage.text}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                <input type="text" className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter full name" />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                <input 
+                  type="text" 
+                  value={newEmployee.name}
+                  onChange={(e) => setNewEmployee({...newEmployee, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                  placeholder="Enter full name" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                  <input type="email" className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="email@example.com" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                  <input 
+                    type="email" 
+                    value={newEmployee.email}
+                    onChange={(e) => setNewEmployee({...newEmployee, email: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                    placeholder="email@example.com" 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
-                  <input type="tel" className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="07700 000000" />
+                  <input 
+                    type="tel" 
+                    value={newEmployee.phone}
+                    onChange={(e) => setNewEmployee({...newEmployee, phone: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                    placeholder="07700 000000" 
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Role</label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    <option>Barista</option>
-                    <option>Server</option>
-                    <option>Kitchen Staff</option>
-                    <option>Manager</option>
+                  <select 
+                    value={newEmployee.role}
+                    onChange={(e) => setNewEmployee({...newEmployee, role: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="Barista">Barista</option>
+                    <option value="Server">Server</option>
+                    <option value="Kitchen Staff">Kitchen Staff</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Cashier">Cashier</option>
+                    <option value="Delivery Driver">Delivery Driver</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
-                  <input type="date" className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                  <input 
+                    type="date" 
+                    value={newEmployee.startDate}
+                    onChange={(e) => setNewEmployee({...newEmployee, startDate: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                  />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+                <select 
+                  value={newEmployee.department}
+                  onChange={(e) => setNewEmployee({...newEmployee, department: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="Front of House">Front of House</option>
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Management">Management</option>
+                  <option value="Delivery">Delivery</option>
+                </select>
               </div>
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowAddEmployeeModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
+              <button 
+                onClick={() => setShowAddEmployeeModal(false)} 
+                disabled={isSubmitting}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
                 Cancel
               </button>
-              <button className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Add Staff
+              <button 
+                onClick={handleAddEmployee}
+                disabled={isSubmitting}
+                className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5" />
+                    Add Staff
+                  </>
+                )}
               </button>
             </div>
           </div>
